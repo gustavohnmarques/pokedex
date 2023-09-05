@@ -6,44 +6,139 @@
     <link rel="stylesheet" href="style.css">
     <title>Document</title>
 </head>
-<body>        
+<body>     
+    
     <section id="cenario">
 
-    </section>
+    </section>    
+
 
     <script>
-        const largura = 256;        
-        const blocoAtual = 48;
 
-        const fundoAleatorio = (number) => {
-            const chance = 20;
-            const numeros = Math.random() * (100);
-            return numeros.toFixed() < chance;
+        const porcentagemCenarios = []
+
+        const cenarioItem = {
+            tipo: '',
+            solido: false,
+        }
+
+        const largura = 256;        
+        let blocoAtual = 48;
+
+        const tiposCenarios = [
+            {
+                tipo: 'terra',
+                porcentagem: 90,
+                fundo: 'fundo-terra',
+                solido: false,
+            },
+            {
+                tipo: 'grama',
+                porcentagem: 8,
+                fundo: 'fundo-grama',
+                solido: false,
+            },
+            {
+                tipo: 'arbusto',
+                porcentagem: 2,
+                fundo: 'fundo-arbusto',
+                solido: true,
+            },
+        ]
+
+        const cenario = [];
+
+        const gerarCenario = async () => {
+            return new Promise(function (resolve, reject){                
+                for (let index = 0; index < largura; index++) {
+                    const porcentagem =  Math.floor(Math.random() * 100);                    
+                    cenario.push({
+                        ...cenarioItem,
+                        tipo: tiposCenarios[porcentagemCenarios[porcentagem]].fundo,
+                        solido: tiposCenarios[porcentagemCenarios[porcentagem]].solido,
+                    })        
+                }
+                resolve();
+            });            
+        }
+
+        const gerarPorcentagemDeCanarios = () => {
+            return new Promise(function (resolve, reject){
+                //Verificar se a porcentagem dos cenarios da 100%
+                const totalPorcentagemCenarios = tiposCenarios.reduce((a, b) => a + (b.porcentagem || 0), 0);
+                if(totalPorcentagemCenarios != 100){
+                    reject();
+                }
+            
+
+                tiposCenarios.map((item, indexCenario) => {
+                    for (let index = 0; index <item.porcentagem; index++) {
+                        porcentagemCenarios.push(indexCenario)                    
+                    }
+                })
+
+                resolve();
+            });
         }
 
         const renderizarCenario = () => {
-            try {
-                const cenario = document.getElementById("cenario");
+            return new Promise(function (resolve, reject){
+                const blocoCenario = document.getElementById("cenario");
 
-                for (let index = 0; index < largura; index++) {
-                    cenario.innerHTML += `<div id="${index}" class="fundo-${fundoAleatorio(index) ? '2' : '1'}"></div>`;
-                }
+                cenario.map((item, index) => {                            
+                    blocoCenario.innerHTML += `
+                        <div id="${index}" class="fundo-terra">
+                            <div class="${item.tipo}"></div>
+                        </div>                        
+                    `;
+                })                
 
-                setTimeout(() => {
-                    iniciarPersonagem();
-                }, 1000);                
-            } catch (error) {
-                console.log(error)
-            }
-
+                resolve();
+            });
         }
 
         const iniciarPersonagem = () => {
-            const blocoPersonagem = document.getElementById(blocoAtual);
-            blocoPersonagem.innerHTML = `<img width="60" height="60" src="personagens/personagem.png" alt="">`
+
+            document.addEventListener("keypress", function(event) {
+                console.log(event.keyCode)
+                if(event.keyCode == 100){
+                    blocoAtual++
+                    renderizarPersonagem(blocoAtual)
+                }
+
+                if(event.keyCode == 97){
+                    blocoAtual--
+                    renderizarPersonagem(blocoAtual)
+                }
+
+            });
+
+            renderizarPersonagem(blocoAtual)
+            
         }
 
-        window.onload = renderizarCenario();
+        const renderizarPersonagem = (bloco) => {
+            try {
+                document.getElementById("personagem").outerHTML = "";
+            } catch (error) {
+                
+            }            
+            const blocoPersonagem = document.getElementById(blocoAtual);
+            blocoPersonagem.innerHTML = `<img id="personagem" width="70" height="70" src="personagens/personagem.png" alt="" style="position: absolute;">`
+        }
+
+        const iniciarGame = async () => {
+            gerarPorcentagemDeCanarios().then(async() => {                
+                await gerarCenario().then(() => {                    
+                    renderizarCenario().then(() => {
+                        iniciarPersonagem();
+                    })
+                })
+            })                        
+        
+        }
+
+        window.onload = iniciarGame();
 
     </script>
 </body>
